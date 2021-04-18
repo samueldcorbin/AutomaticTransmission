@@ -1,4 +1,4 @@
-# AutomaticTransmission
+# Automatic Transmission
 
 By default, if you shift+click something that should generate a chat hyperlink, like an item, but your chat edit box isn't active, nothing happens.
 
