@@ -1,0 +1,6 @@
+## Interface: 90005
+## Author: samueldcorbin
+## Title: AutomaticTransmission
+## Version: 1.0.0
+## Notes: Pastes shift+click hyperlinks to chat even when chat isn't open.
+AutomaticTransmission.lua
