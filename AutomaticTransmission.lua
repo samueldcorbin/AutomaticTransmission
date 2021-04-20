@@ -44,30 +44,30 @@ local function link_was_inserted(text)
     return false
 end
 
--- Shift+click to objective tracker tracks/untracks quest - shouldn't generate a chatlink
-local function quest_tracker_click()
-    local frame = GetMouseFocus()
-
-    if frame:GetName() == "ObjectiveTrackerBlocksFrameHeader" then
-        return true
-    end
-
-    local grandparent = frame:GetParent():GetParent()
-    if grandparent:GetName() == "QuestScrollFrame" then
-        return true
-    end
-end
-
 hooksecurefunc("ChatEdit_InsertLink", function (text)
     if not text then
         return
     end
 
-    if quest_tracker_click() then
+    if link_was_inserted(text) then
         return
     end
 
-    if link_was_inserted(text) then
+    local frame = GetMouseFocus()
+    local frame_name = frame:GetName()
+
+    -- Shift+click splits stacks in inventory
+    if frame_name and strfind(frame:GetName(), "ContainerFrame%d+Item%d+") and
+       frame.count ~= 1 then
+        return
+    end
+
+    -- Shift+click to objective tracker tracks/untracks quests
+    if frame_name == "ObjectiveTrackerBlocksFrameHeader" then
+        return
+    end
+    local grandparent = frame:GetParent():GetParent()
+    if grandparent:GetName() == "QuestScrollFrame" then
         return
     end
 
