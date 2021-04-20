@@ -1,6 +1,5 @@
 -- This returns true when ChatEdit_InsertLink would return true, but without the side effects
 local function link_was_inserted(text)
-
     if MacroFrameText and MacroFrameText:HasFocus() then
         return true
     end
@@ -45,8 +44,26 @@ local function link_was_inserted(text)
     return false
 end
 
+-- Shift+click to objective tracker tracks/untracks quest - shouldn't generate a chatlink
+local function quest_tracker_click()
+    local frame = GetMouseFocus()
+
+    if frame:GetName() == "ObjectiveTrackerBlocksFrameHeader" then
+        return true
+    end
+
+    local grandparent = frame:GetParent():GetParent()
+    if grandparent:GetName() == "QuestScrollFrame" then
+        return true
+    end
+end
+
 hooksecurefunc("ChatEdit_InsertLink", function (text)
     if not text then
+        return
+    end
+
+    if quest_tracker_click() then
         return
     end
 
