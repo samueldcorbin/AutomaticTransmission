@@ -57,7 +57,7 @@ hooksecurefunc("ChatEdit_InsertLink", function (text)
     local frame_name = frame:GetName()
 
     -- Shift+click splits stacks in inventory
-    if frame_name and strfind(frame:GetName(), "ContainerFrame%d+Item%d+") and
+    if frame_name and strfind(frame_name, "ContainerFrame%d+Item%d+") and
        frame.count ~= 1 then
         return
     end
@@ -66,8 +66,20 @@ hooksecurefunc("ChatEdit_InsertLink", function (text)
     if frame_name == "ObjectiveTrackerBlocksFrameHeader" then
         return
     end
-    local grandparent = frame:GetParent():GetParent()
-    if grandparent:GetName() == "QuestScrollFrame" then
+    local parent = frame:GetParent()
+    if parent then
+        if parent:GetName() == "ObjectiveTrackerBlocksFrame" then
+            return
+        end
+        local grandparent = parent:GetParent()
+        if grandparent:GetName() == "QuestScrollFrame" then
+            return
+        end
+    end
+
+    -- quest pins on the map are hyperlinks
+    local pin_template = frame.pinTemplate
+    if pin_template and strsub(pin_template, -16)  == "QuestPinTemplate" then
         return
     end
 
