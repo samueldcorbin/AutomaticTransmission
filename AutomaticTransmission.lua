@@ -1,92 +1,51 @@
--- This returns true when ChatEdit_InsertLink would return true, but without the side effects
-local function link_was_inserted(text)
-    if MacroFrameText and MacroFrameText:HasFocus() then
-        return true
-    end
-
-    if TradeSkillFrame and TradeSkillFrame.SearchBox:HasFocus() then
-        local item
-        if strfind(text, "item:", 1, true) then
-            item = GetItemInfo(text)
+ChatEdit_InsertLink = (function (hookedFunc)
+    return function (text)
+       if hookedFunc(text) then
+            -- game already pasted the link somewhere
+            return
         end
-        if item then
-            return true
-        end
-    end
 
-    if CommunitiesFrame and CommunitiesFrame.ChatEditBox:HasFocus() then
-        return true
-    end
+        local linkType, firstParam = strmatch(text, "|H(%a+):(%d+)")
 
-    if ChatEdit_GetActiveWindow() then
-        return true
-    end
+        -- don't paste link if they were using Shift+click to split a stack
+        if linkType == "item" then
+            local itemID = tonumber(firstParam)
+            local foci = GetMouseFoci()
+            for i, region in ipairs(foci) do
+                if region.GetSlotAndBagID then
+                    local slot, bag = region:GetSlotAndBagID()
+                    if slot and bag and C_Container.GetContainerItemID(bag, slot) == itemID then
+                        if region.count > 1 then
+                            return
+                        end
+                        break
+                    end
+                end
+            end
+        -- don't paste link if they were using Shift+click to track/untrack a quest
+        elseif linkType == "quest" then
+            local foci = GetMouseFoci()
+            for i, region in ipairs(foci) do
+                -- Shift+click on quest tracker entry
+                local parent = region
+                while parent do
+                   if parent == ObjectiveTrackerFrame or parent == QuestScrollFrame then
+                        return
+                    end
+                    parent = parent:GetParent()
+                end
 
-    if AuctionHouseFrame and AuctionHouseFrame:IsVisible() then
-        local item
-        if strfind(text, "battlepet:") then
-            local petName = strmatch(text, "%[(.+)%]")
-            item = petName
-        elseif strfind(text, "item:", 1, true) then
-            item = GetItemInfo(text)
-        end
-        if item then
-            local display_modes = {[AuctionHouseFrameDisplayMode.Buy] = true,
-                                   [AuctionHouseFrameDisplayMode.ItemBuy] = true,
-                                   [AuctionHouseFrameDisplayMode.WoWTokenBuy] = true,
-                                   [AuctionHouseFrameDisplayMode.CommoditiesBuy] = true}
-            if display_modes[AuctionHouseFrame.displayMode] then
-                return true
+                -- Shift+click on quest map pin
+                if region.GetQuestID then
+                    return
+                end
             end
         end
-    end
 
-    return false
-end
-
-hooksecurefunc("ChatEdit_InsertLink", function (text)
-    if not text then
-        return
-    end
-
-    if link_was_inserted(text) then
-        return
-    end
-
-    local frame = GetMouseFocus()
-    local frame_name = frame:GetName()
-
-    -- Shift+click splits stacks in inventory
-    if frame_name and strfind(frame_name, "ContainerFrame%d+Item%d+") and
-       frame.count ~= 1 then
-        return
-    end
-
-    -- Shift+click to objective tracker tracks/untracks quests
-    if frame_name == "ObjectiveTrackerBlocksFrameHeader" then
-        return
-    end
-    local parent = frame:GetParent()
-    if parent then
-        if parent:GetName() == "ObjectiveTrackerBlocksFrame" then
-            return
+        local edit_box = LAST_ACTIVE_CHAT_EDIT_BOX
+        if C_CVar.GetCVar("chatStyle") == "classic" then
+            edit_box:Show()
         end
-        local grandparent = parent:GetParent()
-        if grandparent:GetName() == "QuestScrollFrame" then
-            return
-        end
+        edit_box:Insert(text)
     end
-
-    -- quest pins on the map are hyperlinks
-    local pin_template = frame.pinTemplate
-    if pin_template and strsub(pin_template, -16)  == "QuestPinTemplate" then
-        return
-    end
-
-    local edit_box = LAST_ACTIVE_CHAT_EDIT_BOX
-    if C_CVar.GetCVar("chatStyle") == "classic" then
-        edit_box:Show()
-    end
-    edit_box:Insert(text)
-    edit_box:SetFocus()
-end)
+end)(ChatEdit_InsertLink)
