@@ -1,6 +1,8 @@
-## Interface: 90100
+## Interface: 110100
 ## Author: samueldcorbin
 ## Title: AutomaticTransmission
-## Version: 1.0.4
+## Version: 1.0.5
 ## Notes: Pastes shift+click hyperlinks to chat even when chat isn't open.
+## Category: User Interface
+## IconTexture: Interface\AddOns\AutomaticTransmission\AutomaticTransmissionIcon.png
 AutomaticTransmission.lua
